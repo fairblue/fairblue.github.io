@@ -736,7 +736,7 @@ a.row:hover .svc-row-lead{ color:inherit; }
       <p class="prose reveal" style="margin-top:32px">やり取りはすべてチャットで、打ち合わせはありません。金額は作る範囲が決まった段階で購入前にお伝えするので、確定前に料金が発生することはありません。まず公開中の実物を触って、確かめてからご相談ください。</p>
     </div>
     <dl class="stats reveal">
-      <div><dt>公開作品</dt><dd>8件</dd></div>
+      <div><dt>公開作品</dt><dd>9件</dd></div>
       <div><dt>100日連続制作</dt><dd id="stat-days">Day 10 <span class="caption">（ゲーム10本を公開中）</span></dd></div>
       <div><dt>運用中サービス</dt><dd>2件</dd></div>
     </dl>
@@ -891,6 +891,19 @@ const IMAGES = {
 
 /* 作品データ：featured: true は制作物、false は索引に出る。image を入れると画像が表示される */
 const WORKS = [
+  {
+    title: 'ページ全体スクリーンショット（page-screenshot-tool）', year: '2026', featured: true,
+    lead: 'Webページ全体を1枚のPNGで保存するOSS。Chrome拡張＋一括保存CLI、データ収集ゼロ。',
+    solves: '長いページを何枚も撮影してつなげる手間なく、全体を1枚の画像で残せるようにする。',
+    stack: 'JavaScript / Chrome拡張機能（Manifest V3） / Node.js / Playwright',
+    role: '個人開発（設計・実装・公開）',
+    links: [
+      { label: '紹介ページ', href: 'https://fairblue.github.io/page-screenshot-tool/' },
+      { label: 'GitHub', href: 'https://github.com/fairblue/page-screenshot-tool' }
+    ],
+    image: 'https://raw.githubusercontent.com/fairblue/page-screenshot-tool/main/assets/demo.gif', imageAlt: 'ページ全体スクリーンショット（page-screenshot-tool）のデモ',
+    pending: ''
+  },
   {
     title: 'BizValidator', year: '2026', featured: true,
     lead: '事業アイデアを3行入力すると、検証に使うドキュメントを約30秒で作る。',
