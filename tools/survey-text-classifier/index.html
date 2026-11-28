@@ -1,0 +1,996 @@
+<!doctype html>
+<!-- 公開用コピー（2026-11-28 夜間開発で作成）。原本：~/workspace/goals/ai/survey-text-classifier/index.html。
+     原本との差分は Fake Door セクション（¥1,000買い切り・申込メール導線）と GoatCounter 計測タグのみ。 -->
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>アンケート自由記述 分類ツール</title>
+  <style>
+    :root {
+      --paper: #FFFFFF;
+      --ink: #1C2B45;
+      --pencil: #5B6B82;
+      --blue: #2563EB;
+      --red-text: #B83224;
+      --bg: #E9EDF2;
+      color-scheme: light;
+      font-family: Inter, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      font-variant-numeric: tabular-nums;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      line-height: 1.75;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button, textarea, input, select {
+      font: inherit;
+      color: inherit;
+    }
+
+    .page {
+      width: min(100% - 32px, 1080px);
+      margin: 0 auto;
+      padding: 40px 0 72px;
+    }
+
+    .hero, .section {
+      background: var(--paper);
+      padding: 28px;
+      border-bottom: 1px solid var(--bg);
+    }
+
+    .hero { border-top: 1px solid var(--bg); }
+
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      letter-spacing: 0.05em;
+      line-height: 1.4;
+    }
+
+    h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); }
+    h2 { font-size: 1.4rem; }
+    h3 { font-size: 1.05rem; }
+
+    p { margin: 0 0 14px; }
+    .muted, .note { color: var(--pencil); }
+    .note { font-size: 0.92rem; }
+    .error { color: var(--red-text); font-weight: 600; }
+    .hero-actions, .button-row, .inline-form {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-actions { margin-top: 20px; }
+    .field { display: grid; gap: 6px; margin: 14px 0; }
+    label { font-weight: 600; }
+    textarea, input, select {
+      width: 100%;
+      border: 1px solid var(--pencil);
+      border-radius: 4px;
+      background: var(--paper);
+      padding: 10px 12px;
+    }
+
+    textarea { min-height: 180px; resize: vertical; }
+    button {
+      border: 1px solid var(--blue);
+      border-radius: 4px;
+      padding: 9px 15px;
+      background: var(--paper);
+      color: var(--blue);
+      cursor: pointer;
+      transition: color 0.15s ease-out, background-color 0.15s ease-out;
+    }
+
+    button:hover, button:focus-visible {
+      background: var(--blue);
+      color: var(--paper);
+    }
+
+    button.primary {
+      color: var(--paper);
+      background: var(--blue);
+    }
+
+    button.primary:hover, button.primary:focus-visible {
+      color: var(--blue);
+      background: var(--paper);
+    }
+
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .fake-door { border-top: 2px solid var(--blue); }
+    .price { font-size: 1.5rem; font-weight: 700; margin: 0 0 14px; }
+    a.button {
+      display: inline-block;
+      border: 1px solid var(--blue);
+      border-radius: 4px;
+      padding: 9px 15px;
+      background: var(--paper);
+      color: var(--blue);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.15s ease-out, background-color 0.15s ease-out;
+    }
+    a.button.primary { color: var(--paper); background: var(--blue); }
+    a.button:hover, a.button:focus-visible { background: var(--blue); color: var(--paper); }
+    a.button.primary:hover, a.button.primary:focus-visible { color: var(--blue); background: var(--paper); }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--paper);
+      text-align: left;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--bg);
+      vertical-align: top;
+    }
+
+    th { color: var(--pencil); font-weight: 700; }
+    .representatives { margin: 0; padding-left: 1.3em; }
+    .representatives li { margin: 0 0 4px; }
+    .result-panel { margin-top: 16px; }
+    .result-panel.entering { animation: result-enter 0.25s ease-out both; }
+    .training-list { list-style: none; padding: 0; margin: 16px 0; }
+    .training-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      border-bottom: 1px solid var(--bg);
+      padding: 10px 0;
+    }
+
+    .training-item span { min-width: 0; overflow-wrap: anywhere; }
+    .inline-form > * { flex: 1 1 180px; }
+    .inline-form button { flex: 0 0 auto; }
+    .empty-state { color: var(--pencil); }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+
+    @keyframes result-enter {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page { width: min(100% - 20px, 1080px); padding-top: 10px; }
+      .hero, .section { padding: 20px 16px; }
+      .training-item { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    (function () {
+      "use strict";
+
+      const CATEGORIES = [
+        "料理・ドリンク",
+        "接客・スタッフ",
+        "会場・設備",
+        "価格・グッズ",
+        "その他"
+      ];
+      const STORAGE_KEY = "survey-classifier-training-v1";
+      const BUILTIN_TRAINING = [
+        ["料理がとても美味しかった", "料理・ドリンク"],
+        ["デザートの盛り付けがきれいだった", "料理・ドリンク"],
+        ["ドリンクの種類が豊富で嬉しい", "料理・ドリンク"],
+        ["温かい料理が温かいまま出てきた", "料理・ドリンク"],
+        ["味付けがちょうどよかった", "料理・ドリンク"],
+
+        ["スタッフの笑顔が素敵だった", "接客・スタッフ"],
+        ["案内が分かりやすくて迷わなかった", "接客・スタッフ"],
+        ["レジの対応が丁寧だった", "接客・スタッフ"],
+        ["困っているときにすぐ声をかけてくれた", "接客・スタッフ"],
+        ["受付の対応が早くて助かった", "接客・スタッフ"],
+
+        ["会場が広くてゆったりできた", "会場・設備"],
+        ["トイレがきれいだった", "会場・設備"],
+        ["椅子が座りやすくてよかった", "会場・設備"],
+        ["空調がちょうどよかった", "会場・設備"],
+        ["案内表示が見やすかった", "会場・設備"],
+
+        ["グッズの値段が手頃だった", "価格・グッズ"],
+        ["限定グッズが買えて嬉しかった", "価格・グッズ"],
+        ["入場料に見合う内容だった", "価格・グッズ"],
+        ["お土産の種類が多かった", "価格・グッズ"],
+        ["割引があってお得だった", "価格・グッズ"],
+
+        ["また来たいと思った", "その他"],
+        ["友達にも勧めたい", "その他"],
+        ["全体的に楽しかった", "その他"],
+        ["時間があっという間だった", "その他"],
+        ["特に気になる点はなかった", "その他"]
+      ].map(function (row) {
+        return { text: row[0], category: row[1], builtin: true };
+      });
+
+      const SAMPLE_TEXT = [
+        "カレーが冷めていて残念だった",
+        "スタッフの方が笑顔で案内してくれて嬉しかった",
+        "トイレが少なくて行列ができていた",
+        "グッズの値段が高すぎると思う",
+        "パフェがとても美味しかった",
+        "入場の列の誘導が分かりにくかった",
+        "限定グッズが売り切れていて買えなかった",
+        "会場が寒くて上着が必要だった",
+        "レジの対応が早くて助かった",
+        "ドリンクの種類がもっとあると嬉しい"
+      ].join("\n");
+
+      function featuresFor(text) {
+        const chars = Array.from(String(text || "").normalize("NFKC").toLowerCase())
+          .filter(function (char) { return !/\s/u.test(char); });
+        const features = [];
+        for (let n = 2; n <= 3; n += 1) {
+          for (let i = 0; i <= chars.length - n; i += 1) {
+            features.push(chars.slice(i, i + n).join(""));
+          }
+        }
+        return features;
+      }
+
+      function createModel(training) {
+        const usable = training.filter(function (item) {
+          return CATEGORIES.includes(item.category) && String(item.text || "").trim();
+        });
+        const categoryCounts = Object.create(null);
+        const tokenCounts = Object.create(null);
+        const tokenTotals = Object.create(null);
+        const vocabulary = new Set();
+
+        CATEGORIES.forEach(function (category) {
+          categoryCounts[category] = 0;
+          tokenCounts[category] = Object.create(null);
+          tokenTotals[category] = 0;
+        });
+
+        usable.forEach(function (item) {
+          const category = item.category;
+          categoryCounts[category] += 1;
+          featuresFor(item.text).forEach(function (feature) {
+            vocabulary.add(feature);
+            tokenCounts[category][feature] = (tokenCounts[category][feature] || 0) + 1;
+            tokenTotals[category] += 1;
+          });
+        });
+
+        return {
+          trainingCount: usable.length,
+          categoryCounts: categoryCounts,
+          tokenCounts: tokenCounts,
+          tokenTotals: tokenTotals,
+          vocabulary: vocabulary
+        };
+      }
+
+      function classifyOne(text, modelOrTraining) {
+        const model = modelOrTraining && modelOrTraining.vocabulary
+          ? modelOrTraining
+          : createModel(modelOrTraining || []);
+        const features = featuresFor(text);
+        const totalTraining = model.trainingCount;
+        const vocabularySize = Math.max(model.vocabulary.size, 1);
+        const scores = CATEGORIES.map(function (category) {
+          const count = model.categoryCounts[category] || 0;
+          const prior = totalTraining ? count / totalTraining : 1 / CATEGORIES.length;
+          let score = Math.log(prior || 1e-300);
+          const denominator = (model.tokenTotals[category] || 0) + vocabularySize;
+          features.forEach(function (feature) {
+            if (!model.vocabulary.has(feature)) return;
+            const tokenCount = (model.tokenCounts[category][feature] || 0) + 1;
+            score += Math.log(tokenCount / denominator);
+          });
+          return { category: category, score: score };
+        });
+
+        const maxScore = Math.max.apply(null, scores.map(function (item) { return item.score; }));
+        const expScores = scores.map(function (item) { return Math.exp(item.score - maxScore); });
+        const sum = expScores.reduce(function (sumValue, value) { return sumValue + value; }, 0);
+        const probabilities = scores.map(function (item, index) {
+          return { category: item.category, probability: expScores[index] / sum };
+        });
+        probabilities.sort(function (a, b) {
+          if (b.probability !== a.probability) return b.probability - a.probability;
+          return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
+        });
+
+        const top = probabilities[0];
+        const second = probabilities[1] || { probability: 0 };
+        // しきい値0.40と差分0.10は仮の値。単純ベイズの事後確率は較正されていないため、
+        // 現場のデータで較正してから決める。1位と2位が接戦のときも要確認にする。
+        const needsReview = top.probability < 0.40 || (top.probability - second.probability) < 0.10;
+        return {
+          text: String(text),
+          category: top.category,
+          confidence: top.probability,
+          secondConfidence: second.probability,
+          needsReview: needsReview
+        };
+      }
+
+      function parseCSV(text, delimiter) {
+        const source = String(text || "").replace(/^\uFEFF/, "");
+        const sep = delimiter || ",";
+        const rows = [];
+        let row = [];
+        let cell = "";
+        let quoted = false;
+
+        for (let i = 0; i < source.length; i += 1) {
+          const char = source[i];
+          if (quoted) {
+            if (char === '"') {
+              if (source[i + 1] === '"') {
+                cell += '"';
+                i += 1;
+              } else {
+                quoted = false;
+              }
+            } else {
+              cell += char;
+            }
+          } else if (char === '"' && cell.length === 0) {
+            quoted = true;
+          } else if (char === sep) {
+            row.push(cell);
+            cell = "";
+          } else if (char === "\n" || char === "\r") {
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = "";
+            if (char === "\r" && source[i + 1] === "\n") i += 1;
+          } else {
+            cell += char;
+          }
+        }
+
+        if (cell.length || row.length || source.length === 0) {
+          row.push(cell);
+          rows.push(row);
+        }
+        // 引用符が閉じないまま終わったことを呼び出し元に伝える（配列に付ける）。
+        rows.unclosedQuote = quoted;
+        return rows;
+      }
+
+      function looksLikeHeader(value) {
+        // セル全体が列名と一致するときだけ列名とみなす。部分一致にすると
+        // 「イベントの内容がよかった」のような実データが黙って消える。
+        const header = String(value || "").trim().toLowerCase();
+        return /^(自由記述|コメント|回答|感想|意見|内容|feedback|comment|response|review|text)$/i.test(header);
+      }
+
+      function isTimestampHeader(value) {
+        // 完全一致にする。「タイムスタンプの表示がずれていた」のような実データを列名と誤認しないため。
+        return /^(タイムスタンプ|timestamp)$/i.test(String(value || "").trim());
+      }
+
+      function longestTextColumn(rows) {
+        // 列名で決まらないときは、データ行の平均文字数が一番長い列を自由記述とする。
+        // ただしタイムスタンプ列と日付らしい列とメールアドレスらしい列は対象から外す
+        // （時刻の文字列は長く、メールアドレスも短い回答より長くなりやすいため）。
+        const width = rows[0].length;
+        let best = -1;
+        let bestAvg = -1;
+        for (let col = 0; col < width; col += 1) {
+          if (isTimestampHeader(rows[0][col])) continue;
+          const dataCells = rows.slice(1).map(function (row) {
+            return String(row[col] == null ? "" : row[col]).trim();
+          });
+          if (dataCells.length && dataCells.every(function (cell) {
+            return /^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/.test(cell);
+          })) continue;
+          const nonEmpty = dataCells.filter(Boolean);
+          if (nonEmpty.length && nonEmpty.every(function (cell) { return cell.includes("@"); })) continue;
+          let total = 0;
+          dataCells.forEach(function (cell) { total += cell.length; });
+          const avg = dataCells.length ? total / dataCells.length : 0;
+          if (avg > bestAvg) { bestAvg = avg; best = col; }
+        }
+        // どの列も対象にならなかった場合は1列目を返す（それ以外に読む列がないため）。
+        return best < 0 ? 0 : best;
+      }
+
+      function detectDelimiter(source) {
+        // Googleスプレッドシートからの貼り付けはタブ区切りのため、タブがカンマ以上あればタブで区切る。
+        const firstLine = source.split(/\r?\n/).find(function (line) { return line.trim(); }) || "";
+        const tabs = (firstLine.match(/\t/g) || []).length;
+        const commas = (firstLine.match(/,/g) || []).length;
+        return tabs > 0 && tabs >= commas ? "\t" : ",";
+      }
+
+      function parseInputInfo(text) {
+        const source = String(text || "").replace(/^\uFEFF/, "");
+        const lines = source.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean);
+        if (!lines.length) return { texts: [], column: null };
+        const delimiter = detectDelimiter(source);
+        const parsed = parseCSV(source, delimiter);
+        const unclosedQuote = parsed.unclosedQuote;
+        const rows = parsed
+          .filter(function (row) { return row.some(function (cell) { return String(cell).trim() !== ""; }); });
+        if (!rows.length) return { texts: [], column: null };
+        const headerCells = rows[0];
+        const hasHeader = headerCells.some(function (cell) {
+          return looksLikeHeader(cell) || isTimestampHeader(cell);
+        });
+        if (hasHeader) {
+          let textColumn = -1;
+          headerCells.forEach(function (cell, index) {
+            if (textColumn < 0 && looksLikeHeader(cell)) textColumn = index;
+          });
+          let how = "header";
+          if (textColumn < 0) {
+            textColumn = longestTextColumn(rows);
+            how = "longest";
+          }
+          if (rows.length === 1) return { texts: [], column: null };
+          // 列が1列だけの場合は、CSVのセルを区切り文字でつなぎ直して返す。
+          // （引用符は parseCSV で外れたまま、引用符なしのカンマはつなぎ直される。
+          //  行そのものを返すと、引用符で囲んだセルや改行を含むセルが壊れるため）
+          // ただし引用符が閉じないまま終わった場合は、後ろの回答が全部1件に
+          // まとまるのを避けるため、貼り付けた行そのものに戻す。
+          if (headerCells.length === 1) {
+            if (unclosedQuote) {
+              return { texts: lines.slice(1), column: { index: 0, header: String(headerCells[0] || "").trim(), how: how } };
+            }
+            return { texts: rows.slice(1).map(function (r) { return r.join(delimiter).trim(); }).filter(Boolean), column: { index: 0, header: String(headerCells[0] || "").trim(), how: how } };
+          }
+          const texts = rows.slice(1).map(function (row) {
+            return String(row[textColumn] == null ? "" : row[textColumn]).trim();
+          }).filter(Boolean);
+          return { texts: texts, column: { index: textColumn, header: String(headerCells[textColumn] || "").trim(), how: how } };
+        }
+        // 列名がない場合：全行が同じ列数で、データ行の末尾のセルが数値のときだけCSVとして1列目を読む。
+        // 1行目の末尾が数値でない場合は1行目を列名行として除く。
+        // それ以外は1行1件の貼り付けとして扱い、カンマで切らない。
+        const sameWidth = rows.length > 1 && rows.every(function (row) { return row.length > 1; }) &&
+          rows.every(function (row) { return row.length === rows[0].length; });
+        const dataNumericLast = sameWidth && rows.slice(1).every(function (row) {
+          return /^-?\d+(\.\d+)?$/.test(String(row[row.length - 1]).trim());
+        });
+        if (dataNumericLast) {
+          const firstNumericLast = /^-?\d+(\.\d+)?$/.test(String(rows[0][rows[0].length - 1]).trim());
+          const dataRows = firstNumericLast ? rows : rows.slice(1);
+          return { texts: dataRows.map(function (row) {
+            return String(row[0] == null ? "" : row[0]).trim();
+          }).filter(Boolean), column: { index: 0, header: firstNumericLast ? "" : String(rows[0][0] || "").trim(), how: "first" } };
+        }
+        return { texts: lines, column: null };
+      }
+
+      function parseInput(text) {
+        return parseInputInfo(text).texts;
+      }
+
+      function classifyTexts(texts, training) {
+        const model = createModel(training);
+        return texts.map(function (text) { return classifyOne(text, model); });
+      }
+
+      function summarize(results) {
+        const counts = Object.create(null);
+        const representatives = Object.create(null);
+        CATEGORIES.forEach(function (category) {
+          counts[category] = 0;
+          representatives[category] = [];
+        });
+        results.forEach(function (result) {
+          counts[result.category] += 1;
+          if (representatives[result.category].length < 3) {
+            representatives[result.category].push(result.text);
+          }
+        });
+        const ranked = CATEGORIES.map(function (category) {
+          return { category: category, count: counts[category] };
+        }).sort(function (a, b) {
+          if (b.count !== a.count) return b.count - a.count;
+          return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
+        });
+        return { counts: counts, representatives: representatives, ranked: ranked, total: results.length };
+      }
+
+      function percent(count, total) {
+        return total ? Math.round(count / total * 100) : 0;
+      }
+
+      function csvEscape(value) {
+        const text = String(value == null ? "" : value);
+        // 先頭が = + - @ タブ CR のセルはExcelで数式として開かれるため ' を付ける。
+        const safe = /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
+        return '"' + safe.replace(/"/g, '""') + '"';
+      }
+
+      function resultsToCSV(results) {
+        const rows = [["自由記述", "分類結果", "信頼度", "要確認"]];
+        results.forEach(function (item) {
+          rows.push([
+            item.text,
+            item.category,
+            (item.confidence * 100).toFixed(1) + "%",
+            item.needsReview ? "要確認" : ""
+          ]);
+        });
+        return "\uFEFF" + rows.map(function (row) {
+          return row.map(csvEscape).join(",");
+        }).join("\r\n");
+      }
+
+      function safeLoad(storage) {
+        try {
+          const stored = storage && storage.getItem(STORAGE_KEY);
+          if (!stored) return [];
+          const parsed = JSON.parse(stored);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter(function (item) {
+            return item && CATEGORIES.includes(item.category) &&
+              typeof item.text === "string" && item.text.trim();
+          }).map(function (item) {
+            return { text: item.text, category: item.category, builtin: false };
+          });
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function safeSave(storage, training) {
+        // 保存先がない場合は保存できたことにしない（Cookieをブロックした環境等）。
+        if (!storage) return false;
+        try {
+          storage.setItem(STORAGE_KEY, JSON.stringify(training.map(function (item) {
+            return { text: item.text, category: item.category };
+          })));
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function element(doc, tag, className, text) {
+        const node = doc.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+
+      function append(parent, child) {
+        parent.appendChild(child);
+        return child;
+      }
+
+      class App {
+        constructor(doc, storage) {
+          this.doc = doc;
+          this.storage = storage || null;
+          this.training = BUILTIN_TRAINING.map(function (item) {
+            return { text: item.text, category: item.category, builtin: true };
+          }).concat(safeLoad(this.storage));
+          this.results = [];
+          this.resetArmed = false;
+          this.resetTimer = null;
+          this.resultAnimated = false;
+          this.refs = {};
+          this.build();
+          this.renderTraining();
+        }
+
+        build() {
+          const doc = this.doc;
+          const page = element(doc, "main", "page");
+          this.root = page;
+          doc.body.appendChild(page);
+
+          const hero = append(page, element(doc, "header", "hero"));
+          append(hero, element(doc, "h1", "", "アンケート自由記述 分類ツール"));
+          append(hero, element(doc, "p", "", "自由記述を貼るだけで、声の多いカテゴリと代表文を数えます。"));
+          append(hero, element(doc, "p", "note", "データはこのブラウザ内でのみ処理します。外部には送信しません。"));
+          const heroActions = append(hero, element(doc, "div", "hero-actions"));
+          this.refs.classifyButton = append(heroActions, element(doc, "button", "primary", "自由記述を分類する"));
+          this.refs.classifyButton.type = "button";
+          this.refs.sampleButton = append(heroActions, element(doc, "button", "", "サンプルで試す"));
+          this.refs.sampleButton.type = "button";
+
+          const inputSection = append(page, element(doc, "section", "section"));
+          append(inputSection, element(doc, "h2", "", "CSV入力"));
+          const inputLabel = append(inputSection, element(doc, "label", "", "自由記述（1行1件、またはCSVを貼り付け）"));
+          this.refs.textarea = append(inputSection, element(doc, "textarea"));
+          this.refs.textarea.setAttribute("aria-label", "自由記述（1行1件、またはCSVを貼り付け）");
+          inputLabel.setAttribute("for", "survey-input");
+          this.refs.textarea.id = "survey-input";
+
+          const fileField = append(inputSection, element(doc, "div", "field"));
+          const fileLabel = append(fileField, element(doc, "label", "", "CSV・テキストファイル"));
+          this.refs.fileInput = append(fileField, element(doc, "input"));
+          this.refs.fileInput.type = "file";
+          this.refs.fileInput.accept = ".csv,.txt,text/csv,text/plain";
+          fileLabel.setAttribute("for", "survey-file");
+          this.refs.fileInput.id = "survey-file";
+          append(fileField, element(doc, "p", "note", "Shift_JISのファイルは文字化けする可能性があります。"));
+          const inputActions = append(inputSection, element(doc, "div", "button-row"));
+          this.refs.resetInputButton = append(inputActions, element(doc, "button", "", "入力をリセットする"));
+          this.refs.resetInputButton.type = "button";
+          this.refs.error = append(inputSection, element(doc, "p", "error"));
+          this.refs.error.setAttribute("role", "alert");
+
+          const resultsSection = append(page, element(doc, "section", "section"));
+          this.refs.resultsSection = resultsSection;
+          append(resultsSection, element(doc, "h2", "", "カテゴリ別集計表"));
+          this.refs.empty = append(resultsSection, element(doc, "p", "empty-state",
+            "まだ分類していません。自由記述を入れて「自由記述を分類する」を押すと、ここに集計表が表示されます。"));
+          this.refs.resultPanel = append(resultsSection, element(doc, "div", "result-panel"));
+          this.refs.resultPanel.hidden = true;
+          this.refs.summary = append(this.refs.resultPanel, element(doc, "p", ""));
+          this.refs.summary.setAttribute("aria-live", "polite");
+          this.refs.columnNote = append(this.refs.resultPanel, element(doc, "p", "note", ""));
+          this.refs.summaryTable = append(this.refs.resultPanel, element(doc, "div", "table-wrap"));
+          this.refs.detailTable = append(this.refs.resultPanel, element(doc, "div", "table-wrap"));
+          const exportRow = append(this.refs.resultPanel, element(doc, "div", "button-row"));
+          this.refs.exportButton = append(exportRow, element(doc, "button", "", "分類結果をCSVで保存する"));
+          this.refs.exportButton.type = "button";
+
+          const trainingSection = append(page, element(doc, "section", "section"));
+          append(trainingSection, element(doc, "h2", "", "学習データ"));
+          append(trainingSection, element(doc, "p", "", "自分の例を追加すると、分類があなたの現場の言葉に合っていきます。"));
+          const trainingForm = append(trainingSection, element(doc, "div", "inline-form"));
+          this.refs.trainingText = append(trainingForm, element(doc, "input"));
+          this.refs.trainingText.type = "text";
+          this.refs.trainingText.setAttribute("aria-label", "追加する学習例");
+          this.refs.trainingText.placeholder = "学習例を入力";
+          this.refs.trainingCategory = append(trainingForm, element(doc, "select"));
+          this.refs.trainingCategory.setAttribute("aria-label", "学習例のカテゴリ");
+          CATEGORIES.forEach((category) => {
+            const option = append(this.refs.trainingCategory, element(doc, "option", "", category));
+            option.value = category;
+          });
+          this.refs.addTrainingButton = append(trainingForm, element(doc, "button", "", "学習データを追加する"));
+          this.refs.addTrainingButton.type = "button";
+          this.refs.trainingMessage = append(trainingSection, element(doc, "p", "note"));
+          this.refs.trainingList = append(trainingSection, element(doc, "ul", "training-list"));
+          this.refs.resetTrainingButton = append(trainingSection, element(doc, "button", "", "追加した学習データをリセットする"));
+          this.refs.resetTrainingButton.type = "button";
+
+          const cautions = append(page, element(doc, "section", "section"));
+          append(cautions, element(doc, "h2", "", "注意点"));
+          const list = append(cautions, element(doc, "ul"));
+          [
+            "内蔵の学習データは25件と少ないため、分類精度には限界があります。",
+            "文字n-gramで分類するため、学習データにない未知の単語や表現には弱い場合があります。日本語の形態素解析は行いません。",
+            "単純ベイズは特徴の独立性を仮定しますが、実際の言葉は互いに関連するため、この仮定には限界があります。",
+            "確実な分類には、現場の自由記述に近い自分の例を追加してください。",
+            "生成AIに貼るだけでも似た分類はできます。このツールの価値はCSVの一括処理、分類結果の再現性、ブラウザ内で完結することにあります。"
+          ].forEach((text) => append(list, element(doc, "li", "", text)));
+
+          const fakeDoor = append(page, element(doc, "section", "section fake-door"));
+          append(fakeDoor, element(doc, "h2", "", "このツールを現場で使う方へ"));
+          append(fakeDoor, element(doc, "p", "", "このページのツールは無料でお試しいただけます。現場の言葉に合わせた使い方と、学習データの追加の相談つきの利用権を、買い切りでご用意しています。"));
+          append(fakeDoor, element(doc, "p", "price", "¥1,000（買い切り・税込）"));
+          const includes = append(fakeDoor, element(doc, "ul"));
+          [
+            "ツールの利用権（1ライセンス・件数の上限なし）",
+            "使い方と学習データの追加の相談（メール）",
+            "分類カテゴリは5種類（料理・ドリンク／接客・スタッフ／会場・設備／価格・グッズ／その他）で固定"
+          ].forEach((text) => append(includes, element(doc, "li", "", text)));
+          append(fakeDoor, element(doc, "p", "note", "対象外：アンケートの実施・回収そのもの、CSVの受け渡しや代行集計は行いません。申し込み後は利用案内をメールでお送りします。"));
+          const applyRow = append(fakeDoor, element(doc, "div", "button-row"));
+          const applyLink = append(applyRow, element(doc, "a", "button primary", "¥1,000で利用を申し込む"));
+          applyLink.href = "mailto:velvet-orbit-317@muse.ai?subject=%E3%80%90%E7%94%B3%E8%BE%BC%E3%80%91%E3%82%A2%E3%83%B3%E3%82%B1%E3%83%BC%E3%83%88%E8%87%AA%E7%94%B1%E8%A8%98%E8%BF%B0%20%E5%88%86%E9%A1%9E%E3%83%84%E3%83%BC%E3%83%AB%EF%BC%88%C2%A51%2C000%EF%BC%89&body=%E3%81%8A%E5%90%8D%E5%89%8D%EF%BC%9A%0A%E3%81%94%E9%80%A3%E7%B5%A1%E5%85%88%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%EF%BC%9A%0A%E7%84%A1%E6%96%99%E3%81%AE%E7%94%9F%E6%88%90AI%E3%81%A7%E3%81%AF%E8%B6%B3%E3%82%8A%E3%81%AA%E3%81%8B%E3%81%A3%E3%81%9F%E7%90%86%E7%94%B1%EF%BC%9A%0A%0A%E2%80%95%E2%80%95%20%E3%82%A2%E3%83%B3%E3%82%B1%E3%83%BC%E3%83%88%E8%87%AA%E7%94%B1%E8%A8%98%E8%BF%B0%20%E5%88%86%E9%A1%9E%E3%83%84%E3%83%BC%E3%83%AB%EF%BC%88%C2%A51%2C000%E3%83%BB%E8%B2%B7%E3%81%84%E5%88%87%E3%82%8A%EF%BC%89%E3%81%AE%E5%88%A9%E7%94%A8%E7%94%B3%E8%BE%BC%E3%81%A7%E3%81%99%E3%80%82";
+          append(fakeDoor, element(doc, "p", "note", "申し込みメールには「無料の生成AIでは足りなかった理由」を1行でお書き添えください。"));
+          const backRow = append(fakeDoor, element(doc, "p", "note"));
+          const backLink = append(backRow, element(doc, "a", "", "無料ツール一覧へ戻る"));
+          backLink.href = "../index.html";
+          append(backRow, element(doc, "span", "", " ／ "));
+          const topLink = append(backRow, element(doc, "a", "", "ポートフォリオトップへ"));
+          topLink.href = "https://fairblue.github.io/";
+
+          this.refs.sampleButton.addEventListener("click", () => {
+            this.refs.textarea.value = SAMPLE_TEXT;
+            this.refs.error.textContent = "";
+          });
+          this.refs.classifyButton.addEventListener("click", () => this.runClassification());
+          this.refs.resetInputButton.addEventListener("click", () => {
+            this.refs.textarea.value = "";
+            this.refs.fileInput.value = "";
+            this.refs.error.textContent = "";
+          });
+          this.refs.fileInput.addEventListener("change", (event) => this.readFile(event));
+          this.refs.addTrainingButton.addEventListener("click", () => this.addTraining());
+          this.refs.resetTrainingButton.addEventListener("click", () => this.resetTraining());
+          this.refs.resetTrainingButton.addEventListener("focusout", () => {
+            if (this.resetArmed) this.cancelReset();
+          });
+          this.refs.exportButton.addEventListener("click", () => this.downloadCSV());
+        }
+
+        readFile(event) {
+          const file = event && event.target && event.target.files && event.target.files[0];
+          if (!file) return;
+          if (typeof file.text === "function") {
+            file.text().then((text) => {
+              this.refs.textarea.value = String(text).replace(/^\uFEFF/, "");
+              this.refs.error.textContent = "";
+            }).catch(() => {
+              this.refs.error.textContent = "ファイルを読み込めませんでした。CSVまたはテキストファイルを選んでください。";
+            });
+            return;
+          }
+          const Reader = this.doc.defaultView && this.doc.defaultView.FileReader;
+          if (!Reader) {
+            this.refs.error.textContent = "ファイルを読み込めませんでした。CSVまたはテキストファイルを選んでください。";
+            return;
+          }
+          const reader = new Reader();
+          reader.onload = () => {
+            this.refs.textarea.value = String(reader.result || "").replace(/^\uFEFF/, "");
+            this.refs.error.textContent = "";
+          };
+          reader.onerror = () => {
+            this.refs.error.textContent = "ファイルを読み込めませんでした。CSVまたはテキストファイルを選んでください。";
+          };
+          try {
+            reader.readAsText(file, "UTF-8");
+          } catch (error) {
+            this.refs.error.textContent = "ファイルを読み込めませんでした。CSVまたはテキストファイルを選んでください。";
+          }
+        }
+
+        runClassification() {
+          this.refs.error.textContent = "";
+          const raw = this.refs.textarea.value || "";
+          if (!raw.trim()) {
+            this.refs.error.textContent = "入力が空です。自由記述を1行ずつ貼り付けるか、CSVファイルを選んでください。";
+            return false;
+          }
+          const info = parseInputInfo(raw);
+          const texts = info.texts;
+          if (!texts.length) {
+            this.refs.error.textContent = "読める行がありませんでした。1行目が列名の場合は2行目以降にデータを入れてください。";
+            return false;
+          }
+
+          this.results = classifyTexts(texts, this.training);
+          this.renderResults();
+          this.refs.resultPanel.hidden = false;
+          if (info.column) {
+            if (info.column.how === "header") {
+              this.refs.columnNote.textContent = "「" + info.column.header + "」の列を自由記述として読みました。";
+            } else if (info.column.how === "longest") {
+              this.refs.columnNote.textContent = "列名から決まらなかったため、平均文字数が最も長い" + (info.column.index + 1) + "列目「" + info.column.header + "」を自由記述として読みました。";
+            } else {
+              this.refs.columnNote.textContent = "1列目を自由記述として読みました。";
+            }
+          } else {
+            this.refs.columnNote.textContent = "";
+          }
+
+          const view = this.doc.defaultView;
+          const reduced = view && view.matchMedia && view.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          // スライドインは初回だけ再生する。2回目以降はやり直さない。
+          if (!reduced && !this.resultAnimated && this.refs.resultPanel.classList) {
+            void this.refs.resultPanel.offsetWidth;
+            this.refs.resultPanel.classList.add("entering");
+            this.resultAnimated = true;
+          }
+          if (this.refs.resultsSection.scrollIntoView) {
+            this.refs.resultsSection.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+          }
+          return true;
+        }
+
+        renderResults() {
+          this.refs.empty.hidden = true;
+          this.refs.summaryTable.textContent = "";
+          this.refs.detailTable.textContent = "";
+          const summary = summarize(this.results);
+          const rankedWithItems = summary.ranked.filter(function (item) { return item.count > 0; });
+          if (!rankedWithItems.length) {
+            this.refs.summary.textContent = "分類できる自由記述がありませんでした。";
+            return;
+          }
+
+          const first = rankedWithItems[0];
+          const tied = rankedWithItems.filter(function (item) { return item.count === first.count; });
+          const rest = rankedWithItems.filter(function (item) { return item.count < first.count; });
+          const topNames = tied.map(function (item) { return item.category; }).join("と");
+          let sentence = "最も多いのは" + topNames + "です。全体の" +
+            percent(first.count, summary.total) + "パーセント（" + first.count + "件）";
+          if (tied.length > 1) sentence += "で同数";
+          const second = rest[0];
+          if (second) {
+            sentence += "で、次いで" + second.category + percent(second.count, summary.total) +
+              "パーセント（" + second.count + "件）でした。";
+          } else {
+            sentence += "でした。";
+          }
+          this.refs.summary.textContent = sentence;
+
+          const summaryTable = element(this.doc, "table");
+          const head = append(summaryTable, element(this.doc, "thead"));
+          const headerRow = append(head, element(this.doc, "tr"));
+          ["カテゴリ", "件数", "割合", "代表文3件"].forEach((label) => append(headerRow, element(this.doc, "th", "", label)));
+          const body = append(summaryTable, element(this.doc, "tbody"));
+          CATEGORIES.forEach((category) => {
+            const row = append(body, element(this.doc, "tr"));
+            append(row, element(this.doc, "th", "", category));
+            append(row, element(this.doc, "td", "", String(summary.counts[category])));
+            append(row, element(this.doc, "td", "", percent(summary.counts[category], summary.total) + "%"));
+            const repCell = append(row, element(this.doc, "td"));
+            const repList = append(repCell, element(this.doc, "ul", "representatives"));
+            summary.representatives[category].forEach((text) => append(repList, element(this.doc, "li", "", text)));
+            if (!summary.representatives[category].length) {
+              append(repList, element(this.doc, "li", "muted", "—"));
+            }
+          });
+          append(this.refs.summaryTable, summaryTable);
+
+          const detailTable = element(this.doc, "table");
+          const detailHead = append(detailTable, element(this.doc, "thead"));
+          const detailHeader = append(detailHead, element(this.doc, "tr"));
+          ["自由記述", "分類結果", "信頼度", "要確認"].forEach((label) => append(detailHeader, element(this.doc, "th", "", label)));
+          const detailBody = append(detailTable, element(this.doc, "tbody"));
+          this.results.forEach((item) => {
+            const row = append(detailBody, element(this.doc, "tr"));
+            append(row, element(this.doc, "td", "", item.text));
+            append(row, element(this.doc, "td", "", item.category));
+            append(row, element(this.doc, "td", "", (item.confidence * 100).toFixed(1) + "%"));
+            append(row, element(this.doc, "td", item.needsReview ? "error" : "", item.needsReview ? "要確認（" + item.category + "）" : "—"));
+          });
+          append(this.refs.detailTable, detailTable);
+        }
+
+        addTraining() {
+          const text = String(this.refs.trainingText.value || "").trim();
+          const category = this.refs.trainingCategory.value;
+          if (!text) {
+            this.refs.trainingMessage.textContent = "学習例が空です。文言を入力してから追加してください。";
+            return false;
+          }
+          if (!CATEGORIES.includes(category)) {
+            this.refs.trainingMessage.textContent = "カテゴリが選ばれていません。追加する例のカテゴリを選んでください。";
+            return false;
+          }
+          this.training.push({ text: text, category: category, builtin: false });
+          const saved = safeSave(this.storage, this.training.filter(function (item) { return !item.builtin; }));
+          this.refs.trainingText.value = "";
+          this.refs.trainingMessage.textContent = saved ? "学習データを追加しました。" : "追加しましたが、ブラウザに保存できませんでした。このタブを閉じると追加した例は消えます。";
+          this.renderTraining();
+          return true;
+        }
+
+        renderTraining() {
+          this.refs.trainingList.textContent = "";
+          const added = this.training.filter(function (item) { return !item.builtin; });
+          if (!added.length) {
+            append(this.refs.trainingList, element(this.doc, "li", "muted", "追加した学習データはありません。"));
+            return;
+          }
+          added.forEach((item) => {
+            const li = append(this.refs.trainingList, element(this.doc, "li", "training-item"));
+            append(li, element(this.doc, "span", "", item.text + " — " + item.category));
+            const button = append(li, element(this.doc, "button", "", "削除する"));
+            button.type = "button";
+            button.setAttribute("aria-label", "学習例を削除する: " + item.text);
+            button.addEventListener("click", () => this.removeTraining(item));
+          });
+        }
+
+        removeTraining(item) {
+          const index = this.training.indexOf(item);
+          if (index < 0 || item.builtin) return false;
+          this.training.splice(index, 1);
+          const saved = safeSave(this.storage, this.training.filter(function (entry) { return !entry.builtin; }));
+          this.refs.trainingMessage.textContent = saved ? "学習データを削除しました。" : "削除しましたが、ブラウザに保存できませんでした。このタブを閉じると削除が元に戻ります。";
+          this.renderTraining();
+          return true;
+        }
+
+        resetTraining() {
+          if (!this.resetArmed) {
+            this.resetArmed = true;
+            this.refs.resetTrainingButton.textContent = "もう一度押すとリセットします";
+            if (typeof setTimeout === "function") {
+              this.resetTimer = setTimeout(() => this.cancelReset(), 5000);
+            }
+            return false;
+          }
+          this.cancelReset();
+          this.training = this.training.filter(function (item) { return item.builtin; });
+          const saved = safeSave(this.storage, []);
+          this.refs.trainingMessage.textContent = saved ? "追加した学習データをリセットしました。" : "リセットしましたが、ブラウザに保存できませんでした。このタブを閉じると追加した例が戻ります。";
+          this.renderTraining();
+          return true;
+        }
+
+        cancelReset() {
+          if (this.resetTimer !== null && typeof clearTimeout === "function") clearTimeout(this.resetTimer);
+          this.resetTimer = null;
+          this.resetArmed = false;
+          this.refs.resetTrainingButton.textContent = "追加した学習データをリセットする";
+        }
+
+        downloadCSV() {
+          const csv = resultsToCSV(this.results);
+          const view = this.doc.defaultView || window;
+          if (!view.Blob || !view.URL || !view.URL.createObjectURL) return csv;
+          const blob = new view.Blob([csv], { type: "text/csv;charset=utf-8" });
+          const url = view.URL.createObjectURL(blob);
+          const link = element(this.doc, "a");
+          link.href = url;
+          link.download = "分類結果.csv";
+          this.doc.body.appendChild(link);
+          link.click();
+          link.remove();
+          const revoke = function () { view.URL.revokeObjectURL(url); };
+          if (view.setTimeout) view.setTimeout(revoke, 1000);
+          else revoke();
+          return csv;
+        }
+      }
+
+      const API = {
+        CATEGORIES: CATEGORIES.slice(),
+        STORAGE_KEY: STORAGE_KEY,
+        BUILTIN_TRAINING: BUILTIN_TRAINING.map(function (item) {
+          return { text: item.text, category: item.category };
+        }),
+        SAMPLE_TEXT: SAMPLE_TEXT,
+        featuresFor: featuresFor,
+        createModel: createModel,
+        classifyOne: classifyOne,
+        parseCSV: parseCSV,
+        parseInput: parseInput,
+        parseInputInfo: parseInputInfo,
+        csvEscape: csvEscape,
+        classifyTexts: classifyTexts,
+        summarize: summarize,
+        resultsToCSV: resultsToCSV,
+        safeLoad: safeLoad,
+        safeSave: safeSave,
+        App: App,
+        mount: function (doc, storage) { return new App(doc, storage); }
+      };
+
+      if (typeof globalThis !== "undefined") globalThis.SurveyClassifier = API;
+      if (typeof window !== "undefined" && window.document === document) {
+        // Cookieをブロックしている環境ではlocalStorageへのアクセスで例外になるため、
+        // 画面がまるごと出なくならないようtryで囲む。
+        try {
+          new App(document, window.localStorage);
+        } catch (error) {
+          new App(document, null);
+        }
+      }
+    }());
+  </script>
+  <script data-goatcounter="https://fairblue.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
