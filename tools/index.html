@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>無料ツール | Fair</title>
+  <style>
+    :root {
+      --paper: #FFFFFF;
+      --ink: #1C2B45;
+      --pencil: #5B6B82;
+      --blue: #2563EB;
+      --bg: #E9EDF2;
+      color-scheme: light;
+      font-family: Inter, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; line-height: 1.75; background: var(--bg); color: var(--ink); }
+    .page { width: min(100% - 32px, 860px); margin: 0 auto; padding: 40px 0 72px; }
+    .card { background: var(--paper); padding: 28px; border-bottom: 1px solid var(--bg); }
+    h1 { margin: 0 0 12px; letter-spacing: 0.05em; line-height: 1.4; font-size: clamp(1.7rem, 4vw, 2.4rem); }
+    h2 { margin: 0 0 8px; font-size: 1.25rem; letter-spacing: 0.05em; line-height: 1.4; }
+    p { margin: 0 0 14px; }
+    .muted { color: var(--pencil); }
+    .note { font-size: 0.92rem; color: var(--pencil); }
+    a { color: var(--blue); }
+    .tool-list { list-style: none; padding: 0; margin: 0; }
+    .tool-list li { padding: 4px 0 20px; }
+    @media (max-width: 640px) {
+      .page { width: min(100% - 20px, 860px); padding-top: 10px; }
+      .card { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="card">
+      <h1>無料ツール</h1>
+      <p>ブラウザだけで使える、小さなツールを無料で公開しています。入力したデータはお使いのブラウザ内でのみ処理し、外部には送信しません。</p>
+      <p class="note"><a href="https://fairblue.github.io/">ポートフォリオトップへ戻る</a></p>
+    </header>
+    <section class="card">
+      <ul class="tool-list">
+        <li>
+          <h2><a href="survey-text-classifier/index.html">アンケート自由記述 分類ツール</a></h2>
+          <p>イベントのアンケート自由記述をCSVで入れるだけで、カテゴリ別の件数と代表文を集計します。単純ベイズ分類（文字n-gram）で、料理・ドリンク／接客・スタッフ／会場・設備／価格・グッズ／その他に分けます。自分の現場の言葉を学習データとして追加できます。</p>
+          <p class="note">公開：2026-11-28 ／ 無料でお試しいただけます。現場向けの利用権（¥1,000・買い切り）はツール内のご案内から。</p>
+        </li>
+      </ul>
+      <p class="note">ほかのツールも順次追加予定です。</p>
+    </section>
+  </main>
+  <script data-goatcounter="https://fairblue.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
